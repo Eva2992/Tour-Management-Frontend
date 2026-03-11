@@ -1,26 +1,154 @@
+import { useState } from 'react';
+
 const TourCard = ({ tour }) => {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  
+  // Dummy discount
+  const discountPercent = 12;
+  const originalPrice = Math.round(tour.price / (1 - discountPercent / 100));
+  const discountedPrice = tour.price;
+
   return (
-    <div className="rounded-xl overflow-hidden shadow-lg bg-white w-80">
-      <img
-        src={`http://localhost:3000/img/tours/${tour.imageCover}`}
-        alt={tour.name}
-        className="w-full h-48 object-cover"
-      />
-      <div className="p-5 flex flex-col gap-2">
-        <h3 className="text-xl font-bold text-gray-800">{tour.name}</h3>
-        <p className="text-gray-500 text-sm">{tour.summary}</p>
-        <div className="flex justify-between text-sm text-gray-600 mt-2">
-          <span>⏱ {tour.duration} days</span>
-          <span>👥 {tour.maxGroupSize} people</span>
-        </div>
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>⭐ {tour.ratingsAverage} ({tour.ratingsQuantity})</span>
-          <span className="font-semibold text-green-600">From ${tour.price}</span>
-        </div>
-        <button className="mt-3 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-colors cursor-pointer">
-          Book Now
+    <div className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+      {/* Image Container with Placeholder */}
+      <div className="relative h-48 bg-gradient-to-br from-emerald-100 to-teal-100 overflow-hidden">
+        {/* Room for image - will be set later */}
+        {tour.imageCover ? (
+          <img
+            src={
+              tour.imageCover?.startsWith('http')
+                ? tour.imageCover
+                : `http://localhost:3000${tour.imageCover}`
+            }
+            alt={tour.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            onError={(e) => {
+              e.target.src = '/api/placeholder/400/300';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-emerald-400 text-5xl">
+            🏔️
+          </div>
+        )}
+
+        {/* Overlay on Hover */}
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
+
+        {/* Wishlist Button */}
+        <button
+          onClick={() => setIsWishlisted(!isWishlisted)}
+          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-300 transform hover:scale-110 ${
+            isWishlisted
+              ? 'bg-red-500 text-white'
+              : 'bg-white text-red-300 hover:text-red-500'
+          }`}
+          title="Add to wishlist"
+        >
+          <svg className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} stroke={isWishlisted ? 'none' : 'currentColor'} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isWishlisted ? 0 : 2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
         </button>
+
+        {/* Discount Badge */}
+        <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full font-bold text-sm">
+          -{discountPercent}% OFF
+        </div>
       </div>
+
+      {/* Card Body */}
+      <div className="p-5">
+        {/* Location & Title */}
+        <div className="flex items-start gap-2 mb-2">
+          <svg className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 6h2v2h-2z" />
+          </svg>
+          <h3 className="text-xl font-bold text-gray-800 group-hover:text-emerald-600 transition-colors flex-1">
+            {tour.name}
+          </h3>
+        </div>
+
+        {/* Info Row: Rating, Difficulty, Duration, Start Date */}
+        <div className="grid grid-cols-2 gap-2 mb-4 text-xs bg-emerald-50 p-2 rounded-lg">
+          {/* Rating */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1">
+              <span className="text-yellow-500">⭐</span>
+              <span className="font-bold text-gray-800">{tour.ratingsAverage || 4.5}</span>
+            </div>
+            <span className="text-gray-600 text-xs">Rating</span>
+          </div>
+          
+          {/* Difficulty */}
+          <div className="flex flex-col items-center">
+            <span className={`text-lg ${
+              tour.difficulty === 'easy' ? 'text-green-600' :
+              tour.difficulty === 'medium' ? 'text-yellow-600' :
+              'text-red-600'
+            }`}>
+              {tour.difficulty === 'easy' ? '🟢' :
+               tour.difficulty === 'medium' ? '🟡' :
+               '🔴'}
+            </span>
+            <span className="text-gray-600 capitalize">{tour.difficulty}</span>
+          </div>
+          
+          {/* Duration */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1">
+              <span className="text-teal-600">⏱️</span>
+              <span className="font-bold text-gray-800">{tour.duration}</span>
+            </div>
+            <span className="text-gray-600 text-xs">Days</span>
+          </div>
+          
+          {/* Start Date */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-600">📅</span>
+              <span className="font-bold text-gray-800">
+                {tour.startDates && tour.startDates.length > 0
+                  ? new Date(tour.startDates[0]).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })
+                  : 'TBA'}
+              </span>
+            </div>
+            <span className="text-gray-600 text-xs">Start</span>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{tour.summary}</p>
+
+        {/* Price */}
+        <div className="mb-4 pb-4 border-b-2 border-emerald-100">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-emerald-600">${discountedPrice}</span>
+            <span className="text-sm text-gray-400 line-through">${originalPrice}</span>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => alert('🎫 Booking modal coming soon!')}
+            className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-2 rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-md"
+          >
+            Book Now
+          </button>
+          <button
+            className="px-4 py-2 bg-emerald-100 text-emerald-600 font-bold rounded-lg hover:bg-emerald-200 transition-all duration-300 border-2 border-emerald-300"
+            onClick={() => alert('📄 Details page coming soon!')}
+          >
+            Details
+          </button>
+        </div>
+      </div>
+
+      {/* Hover Glow Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-transparent opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"></div>
     </div>
   );
 };

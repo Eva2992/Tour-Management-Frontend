@@ -1,22 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '../api/axios';
 
-const fetchTours = async () => {
-  try {
-    const res = await axiosInstance.get('/tours');
-    console.log('API Response:', res.data);
-    return res.data.data.doc;
-  } catch (error) {
-    console.error('API Error:', error);
-    throw new Error(error.response?.data?.message || error.message);
-  }
+const fetchTours = async (searchName = '') => {
+  const url = searchName ? `/tours?name=${searchName}` : '/tours';
+  const res = await axiosInstance.get(url);
+  return res.data.data.doc;
 };
 
-const useTours = () => {
+const useTour = (searchName = '') => {  // ✅ renamed to useTour
   return useQuery({
-    queryKey: ['tours'],
-    queryFn: fetchTours,
+    queryKey: ['tours', searchName],
+    queryFn: () => fetchTours(searchName),
   });
 };
 
-export default useTours;
+export default useTour;
