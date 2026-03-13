@@ -1,4 +1,5 @@
 import TourCard from './TourCard';
+import { buildTourImageUrl } from '../api/config';
 
 const Bestsellers = ({ tours }) => {
   // Get top 3 tours by rating
@@ -29,11 +30,7 @@ const Bestsellers = ({ tours }) => {
                 <div className="h-32 bg-gradient-to-br from-emerald-100 to-teal-100 relative overflow-hidden">
                   {tour.imageCover ? (
                     <img
-                      src={
-                        tour.imageCover?.startsWith('http')
-                          ? tour.imageCover
-                          : `http://localhost:3000${tour.imageCover}`
-                      }
+                      src={buildTourImageUrl(tour.imageCover)}
                       alt={tour.name}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                       onError={(e) => {

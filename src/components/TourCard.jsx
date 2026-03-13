@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { buildTourImageUrl } from '../api/config';
 
 const TourCard = ({ tour }) => {
+  console.log('tour.imageCover:', tour.imageCover);
   const [isWishlisted, setIsWishlisted] = useState(false);
   
   // Dummy discount
@@ -11,15 +13,11 @@ const TourCard = ({ tour }) => {
   return (
     <div className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
       {/* Image Container with Placeholder */}
-      <div className="relative h-48 bg-gradient-to-br from-emerald-100 to-teal-100 overflow-hidden">
-        {/* Room for image - will be set later */}
+      <div className="relative h-64 bg-gradient-to-br from-emerald-100 to-teal-100 overflow-hidden">
+        
         {tour.imageCover ? (
           <img
-            src={
-              tour.imageCover?.startsWith('http')
-                ? tour.imageCover
-                : `http://localhost:3000${tour.imageCover}`
-            }
+            src={buildTourImageUrl(tour.imageCover)}
             alt={tour.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={(e) => {
@@ -32,8 +30,7 @@ const TourCard = ({ tour }) => {
           </div>
         )}
 
-        {/* Overlay on Hover */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
+        
 
         {/* Wishlist Button */}
         <button
@@ -79,19 +76,7 @@ const TourCard = ({ tour }) => {
             <span className="text-gray-600 text-xs">Rating</span>
           </div>
           
-          {/* Difficulty */}
-          <div className="flex flex-col items-center">
-            <span className={`text-lg ${
-              tour.difficulty === 'easy' ? 'text-green-600' :
-              tour.difficulty === 'medium' ? 'text-yellow-600' :
-              'text-red-600'
-            }`}>
-              {tour.difficulty === 'easy' ? '🟢' :
-               tour.difficulty === 'medium' ? '🟡' :
-               '🔴'}
-            </span>
-            <span className="text-gray-600 capitalize">{tour.difficulty}</span>
-          </div>
+          
           
           {/* Duration */}
           <div className="flex flex-col items-center">

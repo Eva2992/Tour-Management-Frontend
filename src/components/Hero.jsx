@@ -3,11 +3,15 @@ import bg1 from '../assets/bg1.jpg';
 import bg2 from '../assets/bg2.jpg';
 import bg3 from '../assets/bg3.jpg';
 import bg4 from '../assets/bg4.jpg';
+
+import SearchBar from './SearchBar';
+
+
 const backgrounds = [bg1, bg2, bg3, bg4];
 
-const Hero = ({ setSearchName }) => {
+const Hero = ({ allTours, onSelect, onClear }) => {
   const [bgIndex, setBgIndex] = useState(0);
-  const [inputValue, setInputValue] = useState('');
+;
 
   // Rotate background every 4 seconds
   useEffect(() => {
@@ -16,14 +20,6 @@ const Hero = ({ setSearchName }) => {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchName(inputValue);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [inputValue, setSearchName]);
 
   return (
     <div
@@ -44,18 +40,11 @@ const Hero = ({ setSearchName }) => {
         </h1>
 
         {/* Search Bar */}
-        <div className="mb-8 relative">
-          <div className="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-600 text-xl">
-            🔍
-          </div>
-          <input
-            type="text"
-            value={inputValue}
-            placeholder="Search destinations..."
-            className="w-full pl-14 pr-6 py-4 rounded-full bg-white border-2 border-emerald-300 focus:outline-none focus:border-emerald-500 transition-colors duration-200 text-gray-800 font-semibold shadow-lg"
-            onChange={(e) => setInputValue(e.target.value)}
-          />
-        </div>
+        <SearchBar
+              allTours={allTours}
+               onSelect={onSelect}
+               onClear={onClear}
+                 />
 
         {/* Subtitle */}
         <p className="text-lg md:text-2xl font-bold text-white drop-shadow-md mb-12">

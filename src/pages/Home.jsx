@@ -6,43 +6,37 @@ import Hero from '../components/Hero';
 import Bestsellers from '../components/Bestsellers';
 import Footer from '../components/Footer';
 
-
 const HomePage = () => {
-  const [searchName, setSearchName] = useState('');
   const [sortBy, setSortBy] = useState('');
+  const [displayedTours, setDisplayedTours] = useState(null);
 
-  const { data: tours, isLoading, isError, error } = useTour( searchName );
- 
+  const { data: allTours, isLoading, isError, error } = useTour();
 
-  if (isError) return (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-xl text-red-500">Error: {error.message}</p>
-    </div>
-  );
+  // null = show all, otherwise show filtered
+  const tours = displayedTours ?? allTours;
+
+  const handleSelect = (tour) => setDisplayedTours([tour]);
+  const handleClear = () => setDisplayedTours(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
 
-      {/* Hero — only search bar, no sort */}
-      <Hero setSearchName={setSearchName} />
+      <Hero
+        allTours={allTours}
+        onSelect={handleSelect}
+        onClear={handleClear}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
 
-            {/* Section Title + Sort Dropdowns side by side */}
-            <div className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Section Title + Sort Dropdowns */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-4xl font-bold text-emerald-600">
                 Explore Our Featured Tours
               </h2>
-               
-               {/* Results count */}
-                 {!isLoading && tours && (
-                  <p className="text-gray-500 font-semibold">
-                    {tours.length} {tours.length === 1 ? 'tour' : 'tours'} found
-                    </p>
-               )}
 
               {/* Sort Dropdowns */}
               <div className="flex gap-3 flex-wrap">
@@ -68,6 +62,15 @@ const HomePage = () => {
               </div>
             </div>
 
+            {/* Results count */}
+            {!isLoading && tours && (
+              <div className="mb-6 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-sm px-4 py-1.5 rounded-full">
+                  🗺️ {tours.length} {tours.length === 1 ? 'tour' : 'tours'} found
+                </span>
+              </div>
+            )}
+
             {/* Loading */}
             {isLoading && (
               <div className="flex justify-center items-center min-h-96">
@@ -77,7 +80,19 @@ const HomePage = () => {
                 </div>
               </div>
             )}
-            
+
+            {/* Error State */}
+            {isError && (
+              <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center justify-between">
+                <p className="text-red-600 font-semibold">⚠️ Network error: {error?.message}. Make sure your backend server is running.</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="ml-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold text-sm whitespace-nowrap"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
             {/* Tours Grid */}
             {!isLoading && tours && (
