@@ -3,9 +3,9 @@ import { buildTourImageUrl } from '../api/config';
 
 const Bestsellers = ({ tours }) => {
   // Get top 3 tours by rating
-  const topTours = tours
-    ?.sort((a, b) => (b.ratingsAverage || 0) - (a.ratingsAverage || 0))
-    ?.slice(0, 3) || [];
+  const topTours = [...(tours || [])]
+    .sort((a, b) => (b.ratingsAverage || 0) - (a.ratingsAverage || 0))
+    .slice(0, 3);
 
   return (
     <aside className="w-full lg:w-80 space-y-6">

@@ -3,7 +3,7 @@ import { apiBaseUrl } from './config';
 
 const axiosInstance = axios.create({
   baseURL: apiBaseUrl,
-  withCredentials: true,
+  withCredentials: true, // for cookies as JWT
 });
 
 export default axiosInstance;

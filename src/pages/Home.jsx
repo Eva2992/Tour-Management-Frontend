@@ -10,7 +10,7 @@ const HomePage = () => {
   const [sortBy, setSortBy] = useState('');
   const [displayedTours, setDisplayedTours] = useState(null);
 
-  const { data: allTours, isLoading, isError, error } = useTour();
+  const { data: allTours, isLoading, isError, error } = useTour('', sortBy);
 
   // null = show all, otherwise show filtered
   const tours = displayedTours ?? allTours;

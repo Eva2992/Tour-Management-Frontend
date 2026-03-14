@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { buildTourImageUrl } from '../api/config';
+import { useNavigate } from 'react-router-dom';
+
 
 const TourCard = ({ tour }) => {
+  const navigate = useNavigate();
   console.log('tour.imageCover:', tour.imageCover);
   const [isWishlisted, setIsWishlisted] = useState(false);
   
@@ -122,10 +125,10 @@ const TourCard = ({ tour }) => {
             className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-2 rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-md"
           >
             Book Now
-          </button>
+           </button>
           <button
             className="px-4 py-2 bg-emerald-100 text-emerald-600 font-bold rounded-lg hover:bg-emerald-200 transition-all duration-300 border-2 border-emerald-300"
-            onClick={() => alert('📄 Details page coming soon!')}
+            onClick={() => navigate(`/tours/${tour._id}`)}
           >
             Details
           </button>
