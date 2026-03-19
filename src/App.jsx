@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthProvider';
 import Home from './pages/Home';
 import NotFound from './pages/notFound';
 import TourDetailPage from './pages/TourDetailPage';
+import ProfilePage from './pages/ProfilePage';
 
 const App = () => {
   return (
@@ -11,6 +12,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tours/:id" element={<TourDetailPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

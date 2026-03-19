@@ -48,8 +48,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #10B981;
-  color: white;
+  
+  color: rgb(8, 95, 51);
   cursor: pointer;
   transition: border-color 0.25s;
 }

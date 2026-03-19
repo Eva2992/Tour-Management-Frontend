@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { AuthContext } from './auth';
 import axiosInstance from '../api/axios';
+import { AuthContext } from './auth';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
     const fetchMe = async () => {
       try {
         const res = await axiosInstance.get('/users/me');
-        setUser(res.data.data.data);
+        setUser(res.data.data.doc);
       } catch {
         setUser(null);
       } finally {

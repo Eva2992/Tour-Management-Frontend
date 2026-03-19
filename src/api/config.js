@@ -22,3 +22,14 @@ export const buildTourImageUrl = (imageCover) => {
 
   return `${resolveBackendOrigin()}/img/tours/${imageCover}`;
 };
+
+export const buildUserImageUrl = (photo) => {
+  if (!photo) return '';
+  if (/^https?:\/\//i.test(photo)) return photo;
+
+  if (import.meta.env.DEV) {
+    return `/img/users/${photo}`;
+  }
+
+  return `${resolveBackendOrigin()}/img/users/${photo}`;
+};
