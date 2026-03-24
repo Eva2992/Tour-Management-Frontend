@@ -12,6 +12,14 @@ const HomePage = () => {
 
   const { data: allTours, isLoading, isError, error } = useTour('', sortBy);
 
+  const errorStatus = error?.response?.status;
+  const errorText =
+    errorStatus >= 500
+      ? `Server error (${errorStatus}). Please check backend logs.`
+      : errorStatus
+        ? `Request failed (${errorStatus}). Please try again.`
+        : `Network error: ${error?.message}. Make sure your backend server is running.`;
+
   // null = show all, otherwise show filtered
   const tours = displayedTours ?? allTours;
 
@@ -84,7 +92,7 @@ const HomePage = () => {
             {/* Error State */}
             {isError && (
               <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center justify-between">
-                <p className="text-red-600 font-semibold">⚠️ Network error: {error?.message}. Make sure your backend server is running.</p>
+                <p className="text-red-600 font-semibold">⚠️ {errorText}</p>
                 <button
                   onClick={() => window.location.reload()}
                   className="ml-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold text-sm whitespace-nowrap"

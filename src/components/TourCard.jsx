@@ -1,12 +1,85 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { buildTourImageUrl } from '../api/config';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axios';
+import { useAuth } from '../hooks/useAuth';
+import ReactMarkdown from 'react-markdown';
 
 
 const TourCard = ({ tour }) => {
   const navigate = useNavigate();
-  console.log('tour.imageCover:', tour.imageCover);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { user, setUser } = useAuth();
+  // console.log('tour.imageCover:', tour.imageCover);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  const savedTourIds = useMemo(
+    () => (user?.savedTours || []).map((item) => (typeof item === 'string' ? item : item?._id)).filter(Boolean),
+    [user?.savedTours]
+  );
+  const bookedTourIds = useMemo(
+    () => (user?.bookedTours || []).map((item) => (typeof item === 'string' ? item : item?._id)).filter(Boolean),
+    [user?.bookedTours]
+  );
+
+  const isWishlisted = savedTourIds.includes(tour._id);
+  const isBooked = bookedTourIds.includes(tour._id);
+
+  const patchAddTour = async (payload) => axiosInstance.patch('/users/add-tour', payload);
+
+  const patchRemoveTour = async (payload) => axiosInstance.patch('/users/remove-tour', payload);
+
+  const showFeedback = (type, text) => {
+    setFeedback({ type, text });
+    setTimeout(() => setFeedback(null), 2500);
+  };
+
+  const handleToggleWishlist = async () => {
+    if (actionLoading) return;
+
+    if (!user) {
+      showFeedback('error', 'Please log in to add tours to wishlist.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      if (isWishlisted) {
+        const res = await patchRemoveTour({ savedTours: tour._id });
+        const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+        if (updatedUser) setUser(updatedUser);
+        showFeedback('success', 'Removed from wishlist.');
+      } else {
+        const res = await patchAddTour({ savedTours: tour._id });
+        const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+        if (updatedUser) setUser(updatedUser);
+        showFeedback('success', 'Added to wishlist.');
+      }
+    } catch (error) {
+      showFeedback('error', error?.response?.data?.message || 'Failed to update wishlist.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBookNow = async () => {
+    if (!user) {
+      showFeedback('error', 'Please log in to book this tour.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const res = await patchAddTour({ bookedTours: tour._id });
+      const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+      if (updatedUser) setUser(updatedUser);
+      showFeedback('success', 'Booked successfully! Added to your bookings.');
+    } catch (error) {
+      showFeedback('error', error?.response?.data?.message || 'Failed to book this tour.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
   
   // Dummy discount
   const discountPercent = 12;
@@ -35,20 +108,29 @@ const TourCard = ({ tour }) => {
 
         
 
-        {/* Wishlist Button */}
-        <button
-          onClick={() => setIsWishlisted(!isWishlisted)}
+        {/* Wishlist Icon */}
+        <div
+          onClick={handleToggleWishlist}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleToggleWishlist();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Toggle wishlist"
           className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-300 transform hover:scale-110 ${
             isWishlisted
               ? 'bg-red-500 text-white'
               : 'bg-white text-red-300 hover:text-red-500'
-          }`}
+          } ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
           title="Add to wishlist"
         >
           <svg className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} stroke={isWishlisted ? 'none' : 'currentColor'} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isWishlisted ? 0 : 2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-        </button>
+        </div>
 
         {/* Discount Badge */}
         <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full font-bold text-sm">
@@ -121,18 +203,31 @@ const TourCard = ({ tour }) => {
         {/* Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={() => alert('🎫 Booking modal coming soon!')}
-            className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-2 rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-md"
+            onClick={handleBookNow}
+            disabled={actionLoading || isBooked}
+            className={`flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-2 rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-md ${(actionLoading || isBooked) ? 'opacity-60 cursor-not-allowed hover:scale-100' : ''}`}
           >
-            Book Now
+            {isBooked ? 'Booked' : 'Book Now'}
            </button>
           <button
-            className="px-4 py-2 bg-emerald-100 text-emerald-600 font-bold rounded-lg hover:bg-emerald-200 transition-all duration-300 border-2 border-emerald-300"
+            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 border-2 border-emerald-300"
             onClick={() => navigate(`/tours/${tour._id}`)}
           >
             Details
           </button>
         </div>
+
+        {feedback && (
+          <div
+            className={`mt-3 rounded-lg px-3 py-2 text-xs font-semibold ${
+              feedback.type === 'success'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-red-50 text-red-600 border border-red-200'
+            }`}
+          >
+            {feedback.text}
+          </div>
+        )}
       </div>
 
       {/* Hover Glow Effect */}

@@ -23,18 +23,22 @@ const SignupForm = ({ onSuccess }) => {
       setIsLoading(true);
       setError('');
       const res = await axiosInstance.post('/users/signup', form);
+      let authenticatedUser = null;
       try {
         const meRes = await axiosInstance.get('/users/me');
         const normalizedUser = meRes?.data?.data?.doc || meRes?.data?.data?.user;
         if (normalizedUser) {
+          authenticatedUser = normalizedUser;
           setUser(normalizedUser);
         } else {
-          setUser(res?.data?.data?.doc || res?.data?.data?.user || null);
+          authenticatedUser = res?.data?.data?.doc || res?.data?.data?.user || null;
+          setUser(authenticatedUser);
         }
       } catch {
-        setUser(res?.data?.data?.doc || res?.data?.data?.user || null);
+        authenticatedUser = res?.data?.data?.doc || res?.data?.data?.user || null;
+        setUser(authenticatedUser);
       }
-      onSuccess();
+      onSuccess(authenticatedUser);
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {

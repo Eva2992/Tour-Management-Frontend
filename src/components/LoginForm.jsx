@@ -18,8 +18,22 @@ const LoginForm = ({ onSuccess }) => {
       setIsLoading(true);
       setError('');
       const res = await axiosInstance.post('/users/login', { email, password });
-      setUser(res.data.data.user);
-      onSuccess();
+      let authenticatedUser = null;
+      try {
+        const meRes = await axiosInstance.get('/users/me');
+        const normalizedUser = meRes?.data?.data?.doc || meRes?.data?.data?.user;
+        if (normalizedUser) {
+          authenticatedUser = normalizedUser;
+          setUser(normalizedUser);
+        } else {
+          authenticatedUser = res?.data?.data?.doc || res?.data?.data?.user || null;
+          setUser(authenticatedUser);
+        }
+      } catch {
+        authenticatedUser = res?.data?.data?.doc || res?.data?.data?.user || null;
+        setUser(authenticatedUser);
+      }
+      onSuccess(authenticatedUser);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {

@@ -6,7 +6,11 @@ import TourMap from '../components/TourMap';
 import ReviewForm from '../components/ReviewForm';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { buildTourImageUrl } from '../api/config';
+import { buildTourImageUrl, buildUserImageUrl } from '../api/config';
+import axiosInstance from '../api/axios';
+import { useAuth } from '../hooks/useAuth';
+import ReactMarkdown from 'react-markdown';
+
 
 
 const StarRating = ({ rating }) => { // star rating
@@ -30,8 +34,11 @@ const TourDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const { user, setUser } = useAuth();
 
-  const { data: tour, isLoading, isError } = useTourById(id);
+  const { data: tour, isLoading, isError, error } = useTourById(id);
   const { data: reviews, refetch: refetchReviews } = useReviews(id);
 
   if (isLoading) return (
@@ -40,11 +47,19 @@ const TourDetailPage = () => {
     </div>
   );
 
-  if (isError || !tour) return (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-xl text-red-500">Tour not found.</p>
-    </div>
-  );
+  if (isError || !tour) {
+    const statusCode = error?.response?.status;
+    const errorMessage =
+      statusCode >= 500
+        ? `Server error (${statusCode}). Please check backend logs.`
+        : error?.response?.data?.message || 'Tour not found.';
+
+    return (
+      <div className="flex justify-center items-center h-screen px-4">
+        <p className="text-xl text-red-500 text-center">{errorMessage}</p>
+      </div>
+    );
+  }
 
   // Build images array — cover + tour images
   const allImages = [
@@ -60,6 +75,85 @@ const TourDetailPage = () => {
 
   const discountPercent = 12;
   const originalPrice = Math.round(tour.price / (1 - discountPercent / 100));
+  const savedTourIds = (user?.savedTours || []).map((item) => (typeof item === 'string' ? item : item?._id)).filter(Boolean);
+  const bookedTourIds = (user?.bookedTours || []).map((item) => (typeof item === 'string' ? item : item?._id)).filter(Boolean);
+  const isWishlisted = savedTourIds.includes(tour._id);
+  const isBooked = bookedTourIds.includes(tour._id);
+
+  const patchAddTour = async (payload) => axiosInstance.patch('/users/add-tour', payload);
+
+  const patchRemoveTour = async (payload) => axiosInstance.patch('/users/remove-tour', payload);
+
+  const showFeedback = (type, text) => {
+    setFeedback({ type, text });
+    setTimeout(() => setFeedback(null), 2500);
+  };
+
+  const handleToggleWishlist = async () => {
+    if (actionLoading) return;
+
+    if (!user) {
+      showFeedback('error', 'Please log in to add tours to wishlist.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      if (isWishlisted) {
+        const res = await patchRemoveTour({ savedTours: tour._id });
+        const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+        if (updatedUser) setUser(updatedUser);
+        showFeedback('success', 'Removed from wishlist.');
+      } else {
+        const res = await patchAddTour({ savedTours: tour._id });
+        const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+        if (updatedUser) setUser(updatedUser);
+        showFeedback('success', 'Added to wishlist.');
+      }
+    } catch (error) {
+      showFeedback('error', error?.response?.data?.message || 'Failed to update wishlist.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBookNow = async () => {
+    if (!user) {
+      showFeedback('error', 'Please log in to book this tour.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const res = await patchAddTour({ bookedTours: tour._id });
+      const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+      if (updatedUser) setUser(updatedUser);
+      showFeedback('success', 'Booked successfully! Added to your bookings.');
+    } catch (error) {
+      showFeedback('error', error?.response?.data?.message || 'Failed to book this tour.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!user) {
+      showFeedback('error', 'Please log in first.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const res = await patchRemoveTour({ bookedTours: tour._id });
+      const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+      if (updatedUser) setUser(updatedUser);
+      showFeedback('success', 'Booking canceled successfully.');
+    } catch (error) {
+      showFeedback('error', error?.response?.data?.message || 'Failed to cancel booking.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -172,13 +266,51 @@ const TourDetailPage = () => {
               </div>
             </div>
 
-            {/* Book Button */}
-            <button
-              onClick={() => alert('🎫 Booking coming soon!')}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-4 rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg text-lg"
-            >
-              Book Now
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={isBooked ? handleCancelBooking : handleBookNow}
+                disabled={actionLoading}
+                className={`flex-1 text-white border-2 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg text-lg ${
+                  isBooked
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                } ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+              >
+                {isBooked ? 'Cancel Booking' : 'Book Now'}
+              </button>
+              <div
+                onClick={handleToggleWishlist}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleToggleWishlist();
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                className={`px-5 py-4 rounded-xl border-2 font-bold transition-all duration-300 ${
+                  isWishlisted
+                    ? 'bg-red-500 border-red-500 text-white'
+                    : 'bg-white border-red-200 text-red-500 hover:bg-red-50'
+                } ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                title="Add to wishlist"
+              >
+                {isWishlisted ? '♥' : '♡'}
+              </div>
+            </div>
+
+            {feedback && (
+              <div
+                className={`mt-3 rounded-lg px-3 py-2 text-xs font-semibold ${
+                  feedback.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-red-50 text-red-600 border border-red-200'
+                }`}
+              >
+                {feedback.text}
+              </div>
+            )}
           </div>
         </div>
 
@@ -221,7 +353,7 @@ const TourDetailPage = () => {
                   <div className="flex-shrink-0">
                     {review.referenceUser?.photo ? (
                       <img
-                        src={`http://localhost:3000/img/users/${review.referenceUser.photo}`}
+                        src={buildUserImageUrl(review.referenceUser.photo)}
                         alt={review.referenceUser.name}
                         className="w-12 h-12 rounded-full object-cover"
                         onError={(e) => {

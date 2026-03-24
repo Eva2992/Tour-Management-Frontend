@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 
-const AuthModal = ({ onClose, initialTab = 'login' }) => {
+const AuthModal = ({ onClose, initialTab = 'login', onAuthSuccess }) => {
   const [tab, setTab] = useState(initialTab);
 
   useEffect(() => {
@@ -34,8 +34,14 @@ const AuthModal = ({ onClose, initialTab = 'login' }) => {
 
         {/* Forms */}
         {tab === 'login'
-          ? <LoginForm onSuccess={onClose} />
-          : <SignupForm onSuccess={onClose} />
+          ? <LoginForm onSuccess={(authenticatedUser) => {
+            onAuthSuccess?.(authenticatedUser);
+            onClose();
+          }} />
+          : <SignupForm onSuccess={(authenticatedUser) => {
+            onAuthSuccess?.(authenticatedUser);
+            onClose();
+          }} />
         }
 
         {/* Plain switch text */}
