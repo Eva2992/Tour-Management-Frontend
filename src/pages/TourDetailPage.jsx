@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useTourById from '../hooks/useTourById';
 import useReviews from '../hooks/useReviews';
@@ -41,6 +41,27 @@ const TourDetailPage = () => {
   const { data: tour, isLoading, isError, error } = useTourById(id);
   const { data: reviews, refetch: refetchReviews } = useReviews(id);
 
+  const allImages = [
+    tour?.imageCover,
+    ...(tour?.images || [])
+  ].filter(Boolean);
+
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [allImages.length]);
+
+  useEffect(() => {
+    if (currentImageIndex >= allImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [allImages.length, currentImageIndex]);
+
   if (isLoading) return (
     <div className="flex justify-center items-center h-screen">
       <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
@@ -60,18 +81,6 @@ const TourDetailPage = () => {
       </div>
     );
   }
-
-  // Build images array — cover + tour images
-  const allImages = [
-    tour.imageCover,
-    ...(tour.images || [])
-  ].filter(Boolean);
-
-  const handlePrev = () =>
-    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-
-  const handleNext = () =>
-    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
 
   const discountPercent = 12;
   const originalPrice = Math.round(tour.price / (1 - discountPercent / 100));
@@ -159,7 +168,7 @@ const TourDetailPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="w-full px-4 sm:px-5 lg:px-6 py-12">
 
         {/* Back button */}
         <button
@@ -172,8 +181,8 @@ const TourDetailPage = () => {
         {/* Top Section — Image + Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
 
-          {/* Left — Image with toggle */}
-          <div className="relative rounded-2xl overflow-hidden shadow-xl h-96 bg-emerald-100">
+          {/* Left — Image slider */}
+          <div className="relative rounded-2xl overflow-hidden shadow-xl h-[30rem] bg-emerald-100">
             <img
               src={buildTourImageUrl(allImages[currentImageIndex])}
               alt={tour.name}
@@ -183,33 +192,14 @@ const TourDetailPage = () => {
             {/* Image counter */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
               {allImages.map((_, i) => (
-                <button
+                <span
                   key={i}
-                  onClick={() => setCurrentImageIndex(i)}
                   className={`w-2.5 h-2.5 rounded-full transition-all ${
                     i === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50'
                   }`}
                 />
               ))}
             </div>
-
-            {/* Prev/Next arrows */}
-            {allImages.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center transition"
-                >
-                  ‹
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center transition"
-                >
-                  ›
-                </button>
-              </>
-            )}
           </div>
 
           {/* Right — Tour Details */}
@@ -268,17 +258,35 @@ const TourDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <button
-                onClick={isBooked ? handleCancelBooking : handleBookNow}
-                disabled={actionLoading}
-                className={`flex-1 text-white border-2 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg text-lg ${
-                  isBooked
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
-                } ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-              >
-                {isBooked ? 'Cancel Booking' : 'Book Now'}
-              </button>
+              {!isBooked && (
+                <button
+                  onClick={handleBookNow}
+                  disabled={actionLoading}
+                  className={`flex-[0.8] min-w-[14.5rem] text-white border-2 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  Book Now
+                </button>
+              )}
+
+              {isBooked && (
+                <>
+                  <button
+                    onClick={handleCancelBooking}
+                    disabled={actionLoading}
+                    className={`flex-1 text-white border-2 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    Cancel Booking
+                  </button>
+                  <button
+                    onClick={() => navigate(`/payment/${tour._id}`)}
+                    disabled={actionLoading}
+                    className={`flex-1 text-white border-2 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    Checkout
+                  </button>
+                </>
+              )}
+
               <div
                 onClick={handleToggleWishlist}
                 onKeyDown={(e) => {
@@ -314,81 +322,83 @@ const TourDetailPage = () => {
           </div>
         </div>
 
-        {/* Description */}
-        <div className="bg-white rounded-2xl shadow p-8 mb-10">
-          <h2 className="text-2xl font-bold text-emerald-600 mb-4">About This Tour</h2>
-          {tour.description?.split('\n').map((para, i) => (
-            <p key={i} className="text-gray-600 leading-relaxed mb-3">{para}</p>
-          ))}
-        </div>
-
-        {/* Map */}
-        {tour.locations && tour.locations.length > 0 && (
+        <div className="max-w-[90rem] mx-auto">
+          {/* Description */}
           <div className="bg-white rounded-2xl shadow p-8 mb-10">
-            <h2 className="text-2xl font-bold text-emerald-600 mb-2">Tour Locations</h2>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {tour.locations.map((loc) => (
-                <span key={loc._id} className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-3 py-1 rounded-full">
-                  📍 Day {loc.day} — {loc.description}
-                </span>
-              ))}
-            </div>
-            <TourMap locations={tour.locations} />
+            <h2 className="text-2xl font-bold text-emerald-600 mb-4">About This Tour</h2>
+            {tour.description?.split('\n').map((para, i) => (
+              <p key={i} className="text-gray-600 leading-relaxed mb-3">{para}</p>
+            ))}
           </div>
-        )}
 
-        {/* Reviews */}
-        <div className="bg-white rounded-2xl shadow p-8">
-          <h2 className="text-2xl font-bold text-emerald-600 mb-6">
-            Reviews {reviews && `(${reviews.length})`}
-          </h2>
-
-          {!reviews || reviews.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">No reviews yet.</p>
-          ) : (
-            <div className="space-y-6">
-              {reviews.map((review) => (
-                <div key={review._id} className="flex gap-4 pb-6 border-b border-gray-100 last:border-none">
-                  {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    {review.referenceUser?.photo ? (
-                      <img
-                        src={buildUserImageUrl(review.referenceUser.photo)}
-                        alt={review.referenceUser.name}
-                        className="w-12 h-12 rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${review._id}`;
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${review._id}`}
-                        alt="Anonymous"
-                        className="w-12 h-12 rounded-full bg-emerald-100"
-                      />
-                    )}
-                  </div>
-
-                  {/* Review Content */}
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-bold text-gray-800">
-                        {review.referenceUser?.name || 'Anonymous'}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(review.createAt).toLocaleDateString('en-US', {
-                          month: 'short', day: 'numeric', year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                    <StarRating rating={review.rating} />
-                    <p className="text-gray-600 mt-2 leading-relaxed">{review.review}</p>
-                  </div>
-                </div>
-              ))}
+          {/* Map */}
+          {tour.locations && tour.locations.length > 0 && (
+            <div className="bg-white rounded-2xl shadow p-8 mb-10">
+              <h2 className="text-2xl font-bold text-emerald-600 mb-2">Tour Locations</h2>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {tour.locations.map((loc) => (
+                  <span key={loc._id} className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-3 py-1 rounded-full">
+                    📍 Day {loc.day} — {loc.description}
+                  </span>
+                ))}
+              </div>
+              <TourMap locations={tour.locations} />
             </div>
           )}
-          <ReviewForm tourId={id} onReviewSubmitted={refetchReviews} />
+
+          {/* Reviews */}
+          <div className="bg-white rounded-2xl shadow p-8">
+            <h2 className="text-2xl font-bold text-emerald-600 mb-6">
+              Reviews {reviews && `(${reviews.length})`}
+            </h2>
+
+            {!reviews || reviews.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">No reviews yet.</p>
+            ) : (
+              <div className="space-y-6">
+                {reviews.map((review) => (
+                  <div key={review._id} className="flex gap-4 pb-6 border-b border-gray-100 last:border-none">
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      {review.referenceUser?.photo ? (
+                        <img
+                          src={buildUserImageUrl(review.referenceUser.photo)}
+                          alt={review.referenceUser.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                          onError={(e) => {
+                            e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${review._id}`;
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${review._id}`}
+                          alt="Anonymous"
+                          className="w-12 h-12 rounded-full bg-emerald-100"
+                        />
+                      )}
+                    </div>
+
+                    {/* Review Content */}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-bold text-gray-800">
+                          {review.referenceUser?.name || 'Anonymous'}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(review.createAt).toLocaleDateString('en-US', {
+                            month: 'short', day: 'numeric', year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                      <StarRating rating={review.rating} />
+                      <p className="text-gray-600 mt-2 leading-relaxed">{review.review}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <ReviewForm tourId={id} onReviewSubmitted={refetchReviews} />
+          </div>
         </div>
 
       </main>

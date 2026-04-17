@@ -1,4 +1,16 @@
 import useTour from '../../hooks/useTour';
+import { useQuery } from '@tanstack/react-query';
+import axiosInstance from '../../api/axios';
+
+const fetchUsersCount = async () => {
+  const res = await axiosInstance.get('/users');
+  return res?.data?.results ?? res?.data?.data?.doc?.length ?? 0;
+};
+
+const fetchReviewsCount = async () => {
+  const res = await axiosInstance.get('/reviews');
+  return res?.data?.results ?? res?.data?.data?.doc?.length ?? 0;
+};
 
 const StatCard = ({ icon, label, value, color }) => (
   <div style={{
@@ -23,6 +35,21 @@ const StatCard = ({ icon, label, value, color }) => (
 
 const StatsPlaceholder = () => {
   const { data: tours } = useTour();
+  const { data: usersCount } = useQuery({
+    queryKey: ['admin-users-count'],
+    queryFn: fetchUsersCount,
+    retry: 1,
+  });
+  const { data: reviewsCount } = useQuery({
+    queryKey: ['admin-reviews-count'],
+    queryFn: fetchReviewsCount,
+    retry: 1,
+  });
+
+  const totalTours = tours?.length || 0;
+  const totalUsers = usersCount ?? '—';
+  const totalReviews = reviewsCount ?? '—';
+  const totalRevenue = '$16,720';
 
   return (
     <div>
@@ -35,26 +62,12 @@ const StatsPlaceholder = () => {
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
-        <StatCard icon="🗺️" label="Total Tours"    value={tours?.length || '—'}  color="rgba(163,248,248,0.3)" />
-        <StatCard icon="👥" label="Total Users"    value="—"                      color="rgba(251,191,36,0.2)"  />
-        <StatCard icon="⭐" label="Total Reviews"  value="—"                      color="rgba(167,243,208,0.3)" />
-        <StatCard icon="💰" label="Revenue"        value="Coming Soon"            color="rgba(196,181,253,0.3)" />
+        <StatCard icon="🗺️" label="Total Tours"   value={totalTours}   color="rgba(163,248,248,0.3)" />
+        <StatCard icon="👥" label="Total Users"   value={totalUsers}   color="rgba(251,191,36,0.2)" />
+        <StatCard icon="⭐" label="Total Reviews" value={totalReviews} color="rgba(167,243,208,0.3)" />
+        <StatCard icon="💰" label="Revenue"       value={totalRevenue} color="rgba(196,181,253,0.3)" />
       </div>
 
-      {/* Coming soon banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0c3333, #0a5a5a)',
-        borderRadius: 20, padding: '40px',
-        textAlign: 'center', color: 'white',
-      }}>
-        <p style={{ fontSize: 48, marginBottom: 16 }}>📊</p>
-        <h3 style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Playfair Display', serif", marginBottom: 8 }}>
-          Detailed Statistics Coming Soon
-        </h3>
-        <p style={{ color: 'rgba(163,248,248,0.6)', fontSize: 14 }}>
-          Charts, revenue analytics, and booking trends will be available here.
-        </p>
-      </div>
     </div>
   );
 };

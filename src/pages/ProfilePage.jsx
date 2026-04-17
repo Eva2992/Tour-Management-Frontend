@@ -130,7 +130,7 @@ const ProfilePage = () => {
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-md hover:shadow-lg transition flex items-start gap-4">
                   <div className="text-5xl flex-shrink-0">🏆</div>
                   <div>
-                    <p className="font-bold text-gray-800 text-lg">2 active rewards</p>
+                    <p className="font-bold text-gray-800 text-lg">Free Cancellation </p>
                     <p className="text-gray-600 text-sm mt-1">Showcase your earned rewards and unlock coupon</p>
                   </div>
                 </div>

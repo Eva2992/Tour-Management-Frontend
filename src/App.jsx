@@ -5,6 +5,7 @@ import NotFound from './pages/notFound';
 import TourDetailPage from './pages/TourDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
+import PaymentPage from './pages/PaymentPage';
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tours/:id" element={<TourDetailPage />} />
+          <Route path="/payment/:id" element={<PaymentPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />

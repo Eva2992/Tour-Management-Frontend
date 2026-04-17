@@ -1,7 +1,29 @@
 import TourCard from './TourCard';
 import { buildTourImageUrl } from '../api/config';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import axiosInstance from '../api/axios';
 
 const Bestsellers = ({ tours }) => {
+  const navigate = useNavigate();
+  const { user, setUser } = useAuth();
+
+  const handleBook = async (tourId) => {
+    if (!user) {
+      alert('Please log in to book this tour.');
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.patch('/users/add-tour', { bookedTours: tourId });
+      const updatedUser = res?.data?.data?.doc || res?.data?.data?.user;
+      if (updatedUser) setUser(updatedUser);
+      alert('Booked successfully! You can now checkout from Tour Details.');
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Failed to book this tour.');
+    }
+  };
+
   // Get top 3 tours by rating
   const topTours = [...(tours || [])]
     .sort((a, b) => (b.ratingsAverage || 0) - (a.ratingsAverage || 0))
@@ -60,11 +82,17 @@ const Bestsellers = ({ tours }) => {
                     </div>
                     <span className="text-teal-600 font-semibold">{tour.duration}d</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex gap-2 items-center">
                     <span className="text-lg font-bold text-emerald-600">${tour.price}</span>
                     <button
-                      onClick={() => alert('🎫 Booking modal coming soon!')}
+                      onClick={() => navigate(`/tours/${tour._id}`)}
                       className="px-2 py-1 bg-emerald-500 text-white text-xs font-bold rounded hover:bg-emerald-600 transition-all duration-200 transform hover:scale-105"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleBook(tour._id)}
+                      className="px-2 py-1 bg-teal-500 text-white text-xs font-bold rounded hover:bg-teal-600 transition-all duration-200 transform hover:scale-105"
                     >
                       Book
                     </button>
