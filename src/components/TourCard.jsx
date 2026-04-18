@@ -97,7 +97,7 @@ const TourCard = ({ tour }) => {
             alt={tour.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={(e) => {
-              e.target.src = '/api/placeholder/400/300';
+              e.currentTarget.style.display = 'none';
             }}
           />
         ) : (
