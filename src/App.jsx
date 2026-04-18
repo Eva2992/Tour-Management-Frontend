@@ -4,7 +4,7 @@ import Home from './pages/Home';
 import NotFound from './pages/notFound';
 import TourDetailPage from './pages/TourDetailPage';
 import ProfilePage from './pages/ProfilePage';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './pages/Admindashboard';
 import PaymentPage from './pages/PaymentPage';
 
 const App = () => {
